@@ -1,86 +1,81 @@
 package com.zechariabender.boardcalculator;
 
+import java.util.Random;
+
 public class BoardCalculator {
 
-    private boolean[] input;
-    private int exponent;
+    private static BoardProvider provider = new BoardProvider();
 
-    // only accept input array of length which is a power of 2
-    public boolean setInputs(boolean[] input, int exponent) {
-        if (input.length == Math.pow(2, exponent)) {
-            this.input = input;
-            this.exponent = exponent;
-            return true;
+    public static void main(String[] args) {
+
+        // 0 for EncodedBoard (better performance)
+        // 1 for ObjectBoard
+        int boardType = 0;
+
+        // choose an arbitrary n as exponent of 2 (0 < n < 31)
+        int n = 20;
+
+        try {
+            boolean[] input = new boolean[(int) Math.pow(2, n)];
+            Random random = new Random();
+            for (int i = 1; i < input.length; i++)
+                input[i] = random.nextBoolean();
+
+            Board board = constructBoard(boardType, n);
+            calculateBoard(board, input);
+            saveBoard(board, "board.txt");
+            board = loadBoard("board.txt");
+            calculateBoard(board, input);
+
+        } catch (OutOfMemoryError e) {
+            if (n > 30)
+                System.out.println("Exponent n is too large" +
+                        "\nPick a value smaller than 31" +
+                        "\n(max value of int = 2^31 - 1)");
+            else System.out.println("Error: system out of memory");
+            e.printStackTrace();
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
-        return false;
     }
 
-    // every call to calculate() will generate a completely new
-    // and temporary random board
-    public boolean calculate() {
-        return new Node(BooleanOperatorFactory
-                .generateRandomOperator(), exponent).calculate(0);
+    private static Board constructBoard(int type, int n) {
+        double startTime = System.nanoTime();
+        Board board;
+        if (type == 0) {
+            board = new EncodedBoard(n);
+            System.out.print("Encoded board constructed ");
+        } else {
+            board = new ObjectBoard(n);
+            System.out.print("Object board constructed ");
+        }
+        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
+        return board;
     }
 
-    private class Node {
-
-        private BooleanOperator operator;
-        private Node left;
-        private Node right;
-
-        private Node(BooleanOperator operator, int n) {
-            this.operator = operator;
-            if (n <= 0) { // we've descended n levels - make this node a leaf
-                this.left = null;
-                this.right = null;
-            } else {
-                this.left = new Node(BooleanOperatorFactory
-                        .generateRandomOperator(), n - 1);
-                this.right = new Node(BooleanOperatorFactory
-                        .generateRandomOperator(), n - 1);
-            }
+    private static void calculateBoard(Board board, boolean[] input) {
+        double startTime = System.nanoTime();
+        if (board.setInputs(input)) {
+            boolean result = board.calculateInput();
+            System.out.print("result = " + result + " ");
         }
+        else
+            System.out.println("Error: length of input array not a power of 2 ");
+        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
+    }
 
-        private boolean calculate(int index) {
-            if (left == null || right == null) { // this node is a leaf
-                try {
+    private static void saveBoard(Board board, String filename) {
+        double startTime = System.nanoTime();
+        provider.save(board,filename);
+        System.out.print("board saved ");
+        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
+    }
 
-//                System.out.println("calculating "
-//                        + operator.getClass().getSimpleName()
-//                        + " on input[" + (index) + "]");
-
-                    return input[index];
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            // this node is not a leaf - recurse downwards through children
-            try {
-
-//                    System.out.println("calculating "
-//                            + operator.getClass().getSimpleName()
-//                            + ", index " + index);
-
-                boolean result = operator.calculate(
-
-                        // add digit 0 to the binary number of current index
-                        left.calculate(index * 2),
-
-                        // add digit 1 to the binary number of current index
-                        right.calculate(index * 2 + 1)
-                );
-
-//                    System.out.println(operator.getClass().getSimpleName()
-//                            + " returning " + result
-//                            + ", index " + index);
-
-                return result;
-
-            } catch (Throwable t) {
-                System.out.println("Error at node " + index);
-                throw t;
-            }
-        }
+    private static Board loadBoard(String filename) {
+        double startTime = System.nanoTime();
+        Board board = provider.load(filename);
+        System.out.print("board loaded ");
+        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
+        return board;
     }
 }
