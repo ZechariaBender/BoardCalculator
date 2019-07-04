@@ -20,7 +20,6 @@ class BoardProvider {
         return board;
     }
     void save(Board board, String key) {
-
         try {
             FileOutputStream fileOut = new FileOutputStream(new File(key));
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);

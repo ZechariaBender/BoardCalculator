@@ -2,30 +2,33 @@ package com.zechariabender.boardcalculator;
 
 import java.util.Random;
 
+import static com.zechariabender.boardcalculator.BoardCalculator.BoardType.*;
+
 public class BoardCalculator {
 
+    // 2 Board implementations available:
+    // EncodedOperatorBoard - lightweight efficient and fast
+    // ObjectOperatorBoard - slower but more object-oriented
+    public enum BoardType {ENCODED_OPERATOR, OBJECT_OPERATOR}
     private static BoardProvider provider = new BoardProvider();
 
     public static void main(String[] args) {
 
-        // 0 for EncodedBoard (better performance)
-        // 1 for ObjectBoard
-        int boardType = 0;
-
-        // choose an arbitrary n as exponent of 2 (0 < n < 31)
-        int n = 20;
+        // choose arbitrary n as exponent of 2 (0 < n < 31)
+        int n = 10;
 
         try {
-            boolean[] input = new boolean[(int) Math.pow(2, n)];
-            Random random = new Random();
-            for (int i = 1; i < input.length; i++)
-                input[i] = random.nextBoolean();
-
-            Board board = constructBoard(boardType, n);
-            calculateBoard(board, input);
-            saveBoard(board, "board.txt");
-            board = loadBoard("board.txt");
-            calculateBoard(board, input);
+            boolean[] input = initInput(n);
+            Board board = constructBoard(ENCODED_OPERATOR, n);
+            System.out.println(calculateBoard(board, input));
+            provider.save(board,"boardA.txt");
+            board = provider.load("boardA.txt");
+            System.out.println(calculateBoard(board, input));
+            board = constructBoard(OBJECT_OPERATOR, n);
+            System.out.println(calculateBoard(board, input));
+            provider.save(board,"boardB.txt");
+            board = provider.load("boardB.txt");
+            System.out.println(calculateBoard(board, input));
 
         } catch (OutOfMemoryError e) {
             if (n > 30)
@@ -39,43 +42,28 @@ public class BoardCalculator {
         }
     }
 
-    private static Board constructBoard(int type, int n) {
-        double startTime = System.nanoTime();
-        Board board;
-        if (type == 0) {
-            board = new EncodedBoard(n);
-            System.out.print("Encoded board constructed ");
-        } else {
-            board = new ObjectBoard(n);
-            System.out.print("Object board constructed ");
+    static boolean[] initInput(int n) {
+        boolean[] input = new boolean[(int) Math.pow(2, n)];
+        Random random = new Random();
+        for (int i = 0; i < input.length; i++) {
+            input[i] = random.nextBoolean();
+//            System.out.println(input[i]);
         }
-        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
-        return board;
+
+        return input;
     }
 
-    private static void calculateBoard(Board board, boolean[] input) {
-        double startTime = System.nanoTime();
+    static Board constructBoard(BoardType type, int n) {
+        switch (type) {
+            case ENCODED_OPERATOR: return new EncodedOperatorBoard(n);
+            case OBJECT_OPERATOR: return new ObjectOperatorBoard(n);
+            default: return new EncodedOperatorBoard(n);
+        }
+    }
+
+    static boolean calculateBoard(Board board, boolean[] input) throws Exception {
         if (board.setInputs(input)) {
-            boolean result = board.calculateInput();
-            System.out.print("result = " + result + " ");
-        }
-        else
-            System.out.println("Error: length of input array not a power of 2 ");
-        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
-    }
-
-    private static void saveBoard(Board board, String filename) {
-        double startTime = System.nanoTime();
-        provider.save(board,filename);
-        System.out.print("board saved ");
-        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
-    }
-
-    private static Board loadBoard(String filename) {
-        double startTime = System.nanoTime();
-        Board board = provider.load(filename);
-        System.out.print("board loaded ");
-        System.out.println((System.nanoTime() - startTime) / 1000000 + " ms");
-        return board;
+            return board.calculateInput();
+        } else throw new Exception("Error: length of input array not a power of 2");
     }
 }

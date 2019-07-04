@@ -1,7 +1,10 @@
 package com.zechariabender.boardcalculator;
 
 public interface Board {
-    int getExponent();
+
     boolean setInputs(boolean[] input);
     boolean calculateInput();
+    String serialize();
+    int getExponent();
+    int getRootOperator();
 }

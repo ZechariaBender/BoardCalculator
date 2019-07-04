@@ -1,4 +1,4 @@
-package com.zechariabender.boardcalculator.operator;
+package com.zechariabender.boardcalculator.booleanoperator;
 
 public class TRUEOperator extends BooleanOperator {
     @Override
