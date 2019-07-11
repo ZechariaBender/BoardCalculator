@@ -85,7 +85,7 @@ public class EncodedOperatorBoard implements Board, Serializable {
     public boolean calculateInput() {
         if (exponent == 0)
             return input[0];
-        return calculate(root,(0));
+        return calculate(root,0);
     }
 
     // calculates result of boolean operation on values a and b

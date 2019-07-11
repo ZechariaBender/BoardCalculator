@@ -25,7 +25,7 @@ public class BoardPersistenceTest {
         BoardProvider provider = new BoardProvider();
         boolean[] input = BoardCalculator.initInput(exponent);
         try {
-            Board boardA = BoardCalculator.constructBoard(boardType,exponent);
+            Board boardA = BoardCalculator.logConstructionPerformance(boardType,exponent);
             provider.save(boardA, "board.txt");
             Board boardB = provider.load("board.txt");
             // compare the outputs and thereby verify that the

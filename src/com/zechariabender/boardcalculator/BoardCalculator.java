@@ -2,45 +2,14 @@ package com.zechariabender.boardcalculator;
 
 import java.util.Random;
 
-import static com.zechariabender.boardcalculator.BoardCalculator.BoardType.*;
-
 public class BoardCalculator {
 
     // 2 Board implementations available:
-    // EncodedOperatorBoard - lightweight efficient and fast
+    // EncodedOperatorBoard - lightweight, efficient and fast
     // ObjectOperatorBoard - slower but more object-oriented
     public enum BoardType {ENCODED_OPERATOR, OBJECT_OPERATOR}
-    private static BoardProvider provider = new BoardProvider();
 
-    public static void main(String[] args) {
-
-        // choose arbitrary n as exponent of 2 (0 < n < 31)
-        int n = 10;
-
-        try {
-            boolean[] input = initInput(n);
-            Board board = constructBoard(ENCODED_OPERATOR, n);
-            System.out.println(calculateBoard(board, input));
-            provider.save(board,"boardA.txt");
-            board = provider.load("boardA.txt");
-            System.out.println(calculateBoard(board, input));
-            board = constructBoard(OBJECT_OPERATOR, n);
-            System.out.println(calculateBoard(board, input));
-            provider.save(board,"boardB.txt");
-            board = provider.load("boardB.txt");
-            System.out.println(calculateBoard(board, input));
-
-        } catch (OutOfMemoryError e) {
-            if (n > 30)
-                System.out.println("Exponent n is too large" +
-                        "\nPick a value smaller than 31" +
-                        "\n(max value of int = 2^31 - 1)");
-            else System.out.println("Error: system out of memory");
-            e.printStackTrace();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-    }
+    public static void main(String[] args) {}
 
     static boolean[] initInput(int n) {
         boolean[] input = new boolean[(int) Math.pow(2, n)];
@@ -57,13 +26,38 @@ public class BoardCalculator {
         switch (type) {
             case ENCODED_OPERATOR: return new EncodedOperatorBoard(n);
             case OBJECT_OPERATOR: return new ObjectOperatorBoard(n);
-            default: return new EncodedOperatorBoard(n);
+            default: return null;
         }
+    }
+
+    static Board logConstructionPerformance(BoardType type, int n) {
+        Board board = null;
+        double start = System.nanoTime();
+        switch (type) {
+            case ENCODED_OPERATOR: board = new EncodedOperatorBoard(n);
+            break;
+            case OBJECT_OPERATOR: board = new ObjectOperatorBoard(n);
+        }
+        double runtime = System.nanoTime() - start;
+        System.out.println("constructed board with depth of " + board.getExponent()
+                + " (input size: " + (int) Math.pow(2, board.getExponent()) + ")");
+        System.out.printf("runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
+        return board;
     }
 
     static boolean calculateBoard(Board board, boolean[] input) throws Exception {
         if (board.setInputs(input)) {
             return board.calculateInput();
         } else throw new Exception("Error: length of input array not a power of 2");
+    }
+
+    static void logCalculationPerformance(Board board, boolean[] input) throws Exception {
+        double start = System.nanoTime();
+        boolean result = calculateBoard(board, input);
+        double runtime = System.nanoTime() - start;
+        System.out.println("calculated board with depth of " + board.getExponent()
+                + " (input size: " + (int) Math.pow(2, board.getExponent()) + ")");
+        System.out.println("returned result: " + result);
+        System.out.printf("runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
     }
 }

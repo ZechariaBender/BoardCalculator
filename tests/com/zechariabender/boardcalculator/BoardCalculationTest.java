@@ -23,7 +23,7 @@ public class BoardCalculationTest {
     // tests one operator with all possible inputs
     private void runTest(BoardCalculator.BoardType boardType) {
         try {
-            board = BoardCalculator.constructBoard(boardType,1);
+            board = BoardCalculator.logConstructionPerformance(boardType,1);
         } catch (Exception e) {
             e.printStackTrace();
         }
