@@ -69,6 +69,11 @@ public class ObjectOperatorBoard implements Board, Serializable {
         return calculate(root,(0));
     }
 
+    @Override
+    public boolean concurrentCalculateInput() {
+        return calculateInput();
+    }
+
     private boolean calculate(Node node, int index) {
         if (node.left == null)
             return node.operator.calculate(

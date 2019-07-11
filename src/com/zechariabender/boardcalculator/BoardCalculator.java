@@ -32,16 +32,16 @@ public class BoardCalculator {
 
     static Board logConstructionPerformance(BoardType type, int n) {
         Board board = null;
-        double start = System.nanoTime();
+//        double start = System.nanoTime();
         switch (type) {
             case ENCODED_OPERATOR: board = new EncodedOperatorBoard(n);
             break;
             case OBJECT_OPERATOR: board = new ObjectOperatorBoard(n);
         }
-        double runtime = System.nanoTime() - start;
-        System.out.println("constructed board with depth of " + board.getExponent()
+//        double runtime = System.nanoTime() - start;
+        System.out.println("board depth = " + board.getExponent()
                 + " (input size: " + (int) Math.pow(2, board.getExponent()) + ")");
-        System.out.printf("runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
+//        System.out.printf("runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
         return board;
     }
 
@@ -51,13 +51,29 @@ public class BoardCalculator {
         } else throw new Exception("Error: length of input array not a power of 2");
     }
 
+    static boolean concurrentCalculateBoard(Board board, boolean[] input) throws Exception {
+        if (board.setInputs(input)) {
+            return board.concurrentCalculateInput();
+        } else throw new Exception("Error: length of input array not a power of 2");
+    }
+
     static void logCalculationPerformance(Board board, boolean[] input) throws Exception {
         double start = System.nanoTime();
         boolean result = calculateBoard(board, input);
         double runtime = System.nanoTime() - start;
-        System.out.println("calculated board with depth of " + board.getExponent()
-                + " (input size: " + (int) Math.pow(2, board.getExponent()) + ")");
-        System.out.println("returned result: " + result);
-        System.out.printf("runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
+//        System.out.println("(Regular) calculated board with depth of " + board.getExponent()
+//                + " (input size: " + (int) Math.pow(2, board.getExponent()) + ")");
+//        System.out.println("returned result: " + result);
+        System.out.printf("REGULAR    runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
+    }
+
+    static void logConcurrentCalculationPerformance(Board board, boolean[] input) throws Exception {
+        double start = System.nanoTime();
+        boolean result = concurrentCalculateBoard(board, input);
+        double runtime = System.nanoTime() - start;
+//        System.out.println("(concurrent) calculated board with depth of " + board.getExponent()
+//                + " (input size: " + (int) Math.pow(2, board.getExponent()) + ")");
+//        System.out.println("returned result: " + result);
+        System.out.printf("CONCURRENT runtime: %.2f seconds (%f ms)\n", runtime / 1_000_000_000, runtime / 1_000_000);
     }
 }

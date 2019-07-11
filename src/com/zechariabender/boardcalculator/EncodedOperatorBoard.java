@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Random;
+import java.util.concurrent.*;
 
 public class EncodedOperatorBoard implements Board, Serializable {
 
@@ -14,6 +15,7 @@ public class EncodedOperatorBoard implements Board, Serializable {
     private int exponent;
     private Node root;
     private Random random;
+    private static final int DURATION = 10;
 
     EncodedOperatorBoard(int exponent) {
         this.exponent = exponent;
@@ -88,10 +90,24 @@ public class EncodedOperatorBoard implements Board, Serializable {
         return calculate(root,0);
     }
 
+    @Override
+    public boolean concurrentCalculateInput() {
+        if (exponent == 0)
+            return input[0];
+        CalculateTask ct = new CalculateTask(root,0);
+        ForkJoinPool pool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+        return pool.invoke(ct);
+    }
+
     // calculates result of boolean operation on values a and b
     // by checking the Xth digit of the boolean operator code (from the right),
     // where X is the binary number comprised of a and b
     private boolean calculate(Node node, int index) {
+        try {
+            Thread.sleep(DURATION);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         int left, right;
         // casting boolean results to int using '? 1 : 0'
         if (node.left != null) {
@@ -164,5 +180,38 @@ public class EncodedOperatorBoard implements Board, Serializable {
     @Override
     public int getRootOperator() {
         return root.operator;
+    }
+
+
+    public class CalculateTask extends RecursiveTask<Boolean> {
+
+        Node node;
+        int index;
+
+        CalculateTask(Node node, int index) {
+            this.node = node;
+            this.index = index;
+        }
+
+        @Override
+        protected Boolean compute() {
+            int left = 0, right = 0;
+            try {
+                Thread.sleep(DURATION);
+                if (node.left != null) {
+                    CalculateTask leftTask = new CalculateTask(node.left, (index * 2));
+                    CalculateTask rightTask = new CalculateTask(node.right, (index * 2 + 1));
+                    leftTask.fork();
+                    right = rightTask.compute() ? 1 : 0;
+                    left = leftTask.join() ? 1 : 0;
+                } else {
+                    left = input[index * 2] ? 1 : 0;
+                    right = input[index * 2 + 1] ? 1 : 0;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return ((node.operator >> left * 2 + right) & 1) > 0;
+        }
     }
 }
